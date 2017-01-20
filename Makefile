@@ -1,5 +1,8 @@
 OPENSSL_INCLUDE = -I/Users/julien/Documents/M2Mi/openssl/include/
 OPENSSL_LIB = -L/Users/julien/Documents/M2Mi/openssl/lib/
+#OPENSSL_INCLUDE = -I/usr/local/opt/openssl/include
+#OPENSSL_LIB = -L/usr/local/opt/openssl/lib
+
 
 CFLAGS=-Wall -g $(OPENSSL_INCLUDE)
 LDFLAGS=$(OPENSSL_LIB) -lcrypto -lssl

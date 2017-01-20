@@ -1,0 +1,7 @@
+To download the cerificate of a website:
+
+#> echo -n | openssl s_client -connect HOST:PORTNUMBER | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/$SERVERNAME.cert
+
+That will save the certificate to /tmp/$SERVERNAME.cert.
+
+You can use -showcerts if you want to download all the certificates in the chain.
