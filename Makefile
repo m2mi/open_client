@@ -7,7 +7,7 @@ OPENSSL_LIB = -L/Users/julien/Documents/M2Mi/openssl/lib/
 CFLAGS=-Wall -g $(OPENSSL_INCLUDE)
 LDFLAGS=$(OPENSSL_LIB) -lcrypto -lssl
 
-SOURCES=$(wildcard src/main/c/*.c)
+SOURCES=$(wildcard src/main/c/*.c src/main/c/**/*.c)
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
 
 TARGET=bin/https

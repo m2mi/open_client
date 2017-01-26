@@ -36,7 +36,11 @@ void test_HTTPS_client(void) {
 
 void test_M2Mi_client(void) {
 
+	char * data = "{\"ID\":\"12\",\"IMEI\":\"358696048948767\",\"LAT\":40.241799,\"LON\":-97.910156}";
+
 	M2MiClient * client = init_client(HOST, M2MI_UID, M2MI_PWD, APP_UID, APP_PWD);
+	send_data(client, data);
+
 
 	
 }

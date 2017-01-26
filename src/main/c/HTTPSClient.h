@@ -23,12 +23,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/opensslconf.h>
 
-#ifndef NDEBUG
-#define debug(D, ...)
-#else
-#define debug(D, ...) fprintf(stderr, "DEBUG %s in '%s' line %d:  " D "\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-#endif
-
 typedef struct url_st {
 	char scheme[6];
     char hostname[100];
@@ -63,6 +57,7 @@ HTTPSClient * new_client(char * url);
 int client_open(HTTPSClient *client);
 int client_set_content_type(HTTPSClient *client, CONTENT_TYPE type);
 int client_set_basic_auth(HTTPSClient *client, char * username, char * password);
+int client_set_oauth2(HTTPSClient *client, char * token);
 int client_set_header(HTTPSClient *client, char * header);
 http_response * client_get(HTTPSClient *client);
 http_response * client_post(HTTPSClient *client, char * data);

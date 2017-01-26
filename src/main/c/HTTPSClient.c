@@ -1,6 +1,8 @@
 #include "HTTPSClient.h"
+#include "log/log.h"
 
-const char * PREFERRED_CIPHERS = "ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL"; 
+
+const char * PREFERRED_CIPHERS = "ECDHE-RSA-SPECK256-SHA256"; //"ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL"; 
 const char * TRUST_CERTS = "../resources/geotrust.pem";
 const long FLAGS = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
 
@@ -72,6 +74,15 @@ int client_set_basic_auth(HTTPSClient *client, char * username, char * password)
 	return 1;
 }
 
+int client_set_oauth2(HTTPSClient *client, char * token) {
+
+    int len = strlen(token) + 10;
+    client->authorization = malloc(len);
+    snprintf(client->authorization, len, "Bearer %s", token);
+
+    return 1;
+}
+
 int client_set_header(HTTPSClient *client, char * header) {
 
 	client->header = malloc(200);
@@ -90,14 +101,14 @@ int client_open(HTTPSClient *client) {
     debug("Opening TLS connection...");
 
     if(client->url == NULL) {
-    	debug("Client not initialized.");
+    	error("Client not initialized.");
     	return 0;
     }
     url = client->url;
 
     client->connection = (tls_connection *)malloc(sizeof(tls_connection));
     if(client->connection == NULL) {
-    	debug("Failed to allocate space for tls connection.");
+    	error("Failed to allocate space for tls connection.");
     	return 0;
     }
 
@@ -106,7 +117,7 @@ int client_open(HTTPSClient *client) {
     const SSL_METHOD* method = TLS_method();    
     if(!(NULL != method))
     {
-        debug("Failed to get SSLv23_method.");
+        error("Failed to get SSLv23_method.");
         ssl_error();
         return 0;
     }
@@ -114,7 +125,7 @@ int client_open(HTTPSClient *client) {
     ctx = SSL_CTX_new(method);    
     if(!(ctx != NULL))
     {
-        debug("Failed to create new context.");
+        error("Failed to create new context.");
         return 0;
     }
     
@@ -474,7 +485,7 @@ static void print_san_name(const char* label, X509* const cert)
         OPENSSL_free(utf8);
     
     if(!success)
-        debug("%s: <not available>", label);
+        error("%s: <not available>", label);
     
 }
 
