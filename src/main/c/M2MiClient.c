@@ -99,7 +99,7 @@ static int get_openam_token(M2MiClient * client) {
 	}
 }
 
-M2MiClient * init_client(const char * host, const char * m2mi_uid, const char * m2mi_password, const char * app_uid, const char * app_password) {
+M2MiClient * m2mi_init(const char * host, const char * m2mi_uid, const char * m2mi_password, const char * app_uid, const char * app_password) {
 
 	debug("Initializing M2Mi Client...");
 
@@ -123,7 +123,7 @@ M2MiClient * init_client(const char * host, const char * m2mi_uid, const char * 
 	return client;
 }
 
-int send_data(M2MiClient * client, char * data) {
+int m2mi_send(M2MiClient * client, char * data) {
 	
 	debug("Sending data to M2Mi Application.");
 
@@ -150,7 +150,7 @@ int send_data(M2MiClient * client, char * data) {
 	return 1;
 }
 
-int close_client(M2MiClient * client) {
+int m2mi_close(M2MiClient * client) {
 
 	debug("Closing M2Mi Client...");
 

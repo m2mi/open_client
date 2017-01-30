@@ -37,8 +37,8 @@ typedef struct M2MiClient_st {
 } M2MiClient;
 
 
-M2MiClient * init_client(const char * host, const char * m2mi_uid, const char * m2mi_password, const char * app_uid, const char * app_password);
-int send_data(M2MiClient * client, char * data);
-int close_client(M2MiClient * client);
+M2MiClient * m2mi_init(const char * host, const char * m2mi_uid, const char * m2mi_password, const char * app_uid, const char * app_password);
+int m2mi_send(M2MiClient * client, char * data);
+int m2mi_close(M2MiClient * client);
 
 #endif
