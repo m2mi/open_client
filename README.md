@@ -13,7 +13,7 @@
     
     /* Send data */
     char * data = "{\"LAT\":40.241799,\"LON\":-97.910156}";
-    int res = m2mi_init(client, data);
+    int res = m2mi_send(client, data);
 
     /* Close the client */
     res = m2mi_close(client);
