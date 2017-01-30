@@ -21,6 +21,7 @@
 #include "https/HTTPSClient.h"
 #include "json/jsmn.h"
 #include "log/log.h"
+#include <string.h>
 
 const char * OPENAM_PATH = "/openam/oauth2/m2mi/access_token";
 
@@ -100,33 +101,39 @@ static int get_openam_token(M2MiClient * client) {
 
 M2MiClient * init_client(const char * host, const char * m2mi_uid, const char * m2mi_password, const char * app_uid, const char * app_password) {
 
+	debug("Initializing M2Mi Client...");
+
 	M2MiClient *client = malloc(sizeof(M2MiClient));
 	if(NULL == client) {
 		error("Failed to allocate memory for client.");
 		return NULL;
 	}
 
-	strcpy(client->host, host);
-	strcpy(client->m2mi_uid, m2mi_uid);
-	strcpy(client->m2mi_password, m2mi_password);
-	strcpy(client->app_uid, app_uid);
-	strcpy(client->app_password, app_password);
+	client->host = strdup(host);
+	client->m2mi_uid = strdup(m2mi_uid);
+	client->m2mi_password = strdup(m2mi_password);
+	client->app_uid = strdup(app_uid);
+	client->app_password = strdup(app_password);
 	client->token = NULL;
 
 	get_openam_token(client); 
+
+	debug("Client initialized.");
 
 	return client;
 }
 
 int send_data(M2MiClient * client, char * data) {
 	
+	debug("Sending data to M2Mi Application.");
+
 	if(client->token == NULL) {
 		error("No token provided.");
 		return -1;
 	}
 
 	char data_url[400];
-	snprintf(data_url, sizeof(data_url), "%snode/v2/rs/node/data/572c9b97faa1297094bac01c?device=358696048948767",client->host);
+	snprintf(data_url, sizeof(data_url), "%s/node/v2/rs/node/data/572c9b97faa1297094bac01c?device=358696048948767",client->host);
 
 	HTTPSClient * https = new_client(data_url);
 	client_open(https);
@@ -139,6 +146,27 @@ int send_data(M2MiClient * client, char * data) {
 		error("Failed to send data with HTTP error %d.", response->code);
 		return -1;
 	}
+
+	return 1;
+}
+
+int close_client(M2MiClient * client) {
+
+	debug("Closing M2Mi Client...");
+
+	free(client->host);
+	free(client->m2mi_uid);
+	free(client->m2mi_password);
+	free(client->app_uid);
+	free(client->app_password);
+	if(client->token != NULL) {
+		free(client->token->type);
+		free(client->token->access);
+		free(client->token->refresh);
+	}
+	free(client);
+
+	debug("Client closed.");
 
 	return 1;
 }

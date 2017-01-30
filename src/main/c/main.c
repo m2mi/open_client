@@ -63,7 +63,6 @@ void test_M2Mi_client(void) {
 	if(res > 0) {
 		printf("Data sent.");
 	}
-
-
+	close_client(client);
 	
 }

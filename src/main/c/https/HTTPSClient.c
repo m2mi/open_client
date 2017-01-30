@@ -85,7 +85,7 @@ int client_set_basic_auth(HTTPSClient *client, char * username, char * password)
     BIO_set_close(bio, BIO_NOCLOSE);   
     BIO_free_all(b64); 
 
-    client->authorization = malloc(bio_ptr->length + 9);
+    client->authorization = calloc(bio_ptr->length + 9, sizeof(char));
     snprintf(client->authorization, bio_ptr->length + 9, "Basic %s", bio_ptr->data);
 
     debug("Adding authorization header: %s", client->authorization);
