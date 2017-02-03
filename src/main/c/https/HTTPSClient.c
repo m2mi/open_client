@@ -25,6 +25,8 @@ const char * PREFERRED_CIPHERS = "ECDHE-RSA-SPECK256-SHA256"; //"ALL:+AES:!CAMEL
 const char * TRUST_CERTS = "../resources/geotrust.pem";
 const long FLAGS = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
 
+static const char * CONTENT_TYPE_STR[] = {"application/json", "application/x-www-form-urlencoded"};
+
 static void init_openssl_library(void);
 static void ssl_error(void);
 #ifdef NDEBUG
@@ -256,26 +258,29 @@ int client_open(HTTPSClient *client) {
 http_response * client_get(HTTPSClient *client) {
 
 	http_response * response = NULL;
-    char request[512];
-    int MAX_DATA_SIZE = 2000;
+    const int MAX_REQUEST_SIZE = 1000;
+    const int MAX_DATA_SIZE = 2000;
+    char * request = malloc(MAX_REQUEST_SIZE);
+    void * tmp = NULL;
     
     debug("Sending HTTP GET request...");
 
     response = malloc(sizeof(http_response));
     response->data = calloc(MAX_DATA_SIZE, sizeof(char));
 	        
-	/* Build the request */                                                              
-    snprintf(request, sizeof(request), "GET %s HTTP/1.1\r\nHost: %s\r\n", client->url->path, client->url->hostname );
+	/* Build the request */   
+    int length = 0;                                                           
+    length += snprintf(request + length, MAX_REQUEST_SIZE - length, "GET %s HTTP/1.1\r\nHost: %s\r\n", client->url->path, client->url->hostname );
 	if(NULL != client->authorization) {
-		snprintf(request, sizeof(request), "%sAuthorization: %s\r\n", request, client->authorization);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Authorization: %s\r\n", client->authorization);
 	}
 	if(NULL != client->content_type) {
-		snprintf(request, sizeof(request), "%sContent-Type: %s\r\n", request, client->content_type);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Type: %s\r\n", client->content_type);
 	}
 	if(NULL != client->header) {
-		snprintf(request, sizeof(request), "%s%s\r\n", request, client->header);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n", client->header);
 	}
-	snprintf(request, sizeof(request), "%sConnection: close\r\n\r\n", request); 
+	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n\r\n"); 
 	
 	/* Send the request */ 
 	BIO_puts(client->connection->bio, request);
@@ -288,7 +293,11 @@ http_response * client_get(HTTPSClient *client) {
         len = BIO_read(client->connection->bio, buff, sizeof(buff));
         if(len > 0) {
         	if(size + len > MAX_DATA_SIZE) {
-        		realloc(response->data, MAX_DATA_SIZE);
+        		tmp = realloc(response->data, MAX_DATA_SIZE);
+                if(NULL == tmp) {
+                    error("Failed to allocate sufficient memory for response.");
+                    return NULL;
+                }
         	}
         	memcpy(response->data + size, buff, len);
         }
@@ -306,33 +315,36 @@ http_response * client_get(HTTPSClient *client) {
 http_response * client_post(HTTPSClient *client, char * data) {
 
 	http_response * response = NULL;
-    char request[512];
-    int MAX_DATA_SIZE = 2000;
+    const int MAX_REQUEST_SIZE = 1000;
+    const int MAX_DATA_SIZE = 2000;
+    char * request = malloc(MAX_REQUEST_SIZE);
+    void * tmp = NULL;
     
     debug("Sending HTTP POST request...");
 
     response = malloc(sizeof(http_response));
     response->data = calloc(MAX_DATA_SIZE, sizeof(char));
 	        
-	/* Build the request */                                                              
-    snprintf(request, sizeof(request), "POST %s HTTP/1.1\r\nHost: %s\r\n", client->url->path, client->url->hostname );
+	/* Build the request */  
+    int length = 0;                                                            
+    length += snprintf(request + length, MAX_REQUEST_SIZE - length, "POST %s HTTP/1.1\r\nHost: %s\r\n", client->url->path, client->url->hostname );
 	if(NULL != client->authorization) {
-		snprintf(request, sizeof(request), "%sAuthorization: %s\r\n", request, client->authorization);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Authorization: %s\r\n", client->authorization);
 	}
 	if(NULL != client->content_type) {
-		snprintf(request, sizeof(request), "%sContent-Type: %s\r\n", request, client->content_type);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Type: %s\r\n", client->content_type);
 	}
 	if(NULL != client->header) {
-		snprintf(request, sizeof(request), "%s%s\r\n", request, client->header);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n",client->header);
 	}
-	snprintf(request, sizeof(request), "%sConnection: close\r\n", request); 
+	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n"); 
 	if(NULL != data) {
-		snprintf(request, sizeof(request), "%sContent-Length: %lu\r\n\r\n", request, sizeof(data));
-		snprintf(request, sizeof(request), "%s%s\r\n", request, data); 
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Length: %lu\r\n\r\n", sizeof(data));
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n", data); 
 	} 
 	else {
-		snprintf(request, sizeof(request), "%sContent-Length: %d\r\n", request, 0);
-		snprintf(request, sizeof(request), "%s\r\n\r\n", request);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Length: %d\r\n", 0);
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "\r\n\r\n");
 	}
 	#ifdef NDEBUG
 	printf("%s", request);
@@ -349,7 +361,11 @@ http_response * client_post(HTTPSClient *client, char * data) {
         len = BIO_read(client->connection->bio, buff, sizeof(buff));
         if(len > 0) { 
         	if(size + len > MAX_DATA_SIZE) {
-        		realloc(response->data, MAX_DATA_SIZE);
+        		tmp = realloc(response->data, MAX_DATA_SIZE);
+                if(NULL == tmp) {
+                    error("Failed to allocate sufficient memory for response.");
+                    return NULL;
+                }
         	}
         	memcpy(response->data + size, buff, len);
         }

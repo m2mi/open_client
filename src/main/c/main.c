@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
 	//test_HTTPS_client();
 	test_M2Mi_client();
 
+	return 1;
+
 }
 
 void test_HTTPS_client(void) {

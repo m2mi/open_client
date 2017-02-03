@@ -57,7 +57,6 @@ typedef struct tls_connection_st {
 typedef enum {
 	JSON, URL_ENCODED
 } CONTENT_TYPE;
-static const char * CONTENT_TYPE_STR[] = {"application/json", "application/x-www-form-urlencoded"};
 
 typedef struct HTTPSClient_st {
 	URL * url;
