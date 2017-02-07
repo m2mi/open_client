@@ -339,7 +339,7 @@ http_response * client_post(HTTPSClient *client, char * data) {
 	}
 	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n"); 
 	if(NULL != data) {
-		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Length: %lu\r\n\r\n", sizeof(data));
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Length: %lu\r\n\r\n", strlen(data));
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n", data); 
 	} 
 	else {
