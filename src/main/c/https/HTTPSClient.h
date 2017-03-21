@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * Contributors:
- *     Julien Niset 
+ *     Julien Niset
  */
 
 #ifndef _HTTPSClient_h
@@ -41,6 +41,8 @@
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
 #include <openssl/opensslconf.h>
+
+#include "../log/log.h"
 
 typedef struct url_st {
 	char scheme[6];
@@ -71,14 +73,14 @@ typedef struct http_response_st {
 	char *data;
 } http_response;
 
-HTTPSClient * new_client(char * url);
-int client_open(HTTPSClient *client);
-int client_set_content_type(HTTPSClient *client, CONTENT_TYPE type);
-int client_set_basic_auth(HTTPSClient *client, char * username, char * password);
-int client_set_oauth2(HTTPSClient *client, char * token);
-int client_set_header(HTTPSClient *client, char * header);
-http_response * client_get(HTTPSClient *client);
-http_response * client_post(HTTPSClient *client, char * data);
-int client_close(HTTPSClient *client);
+HTTPSClient * new_https_client(const char * url);
+int https_open(HTTPSClient *client);
+int https_set_content_type(HTTPSClient *client, CONTENT_TYPE type);
+int https_set_basic_auth(HTTPSClient *client, char * username, char * password);
+int https_set_oauth2(HTTPSClient *client, char * token);
+int https_set_header(HTTPSClient *client, char * header);
+http_response * https_get(HTTPSClient *client);
+http_response * https_post(HTTPSClient *client, char * data);
+int https_close(HTTPSClient *client);
 
 #endif

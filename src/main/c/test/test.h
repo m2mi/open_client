@@ -17,28 +17,33 @@
  *     Julien Niset
  */
 
-#ifndef _M2MiClient_h
-#define _M2MiClient_h
+#ifndef _test_h_
+#define _test_h_
 
-#include "https/HTTPSClient.h"
-#include "json/json.h"
-#include "json/jsmn.h"
-#include "log/log.h"
-#include "auth/openam.h"
-#include "auth/token.h"
-#include "auth/m2mi.h"
-#include "crypto/crypto.h"
-#include <string.h>
+#include <stdio.h>
 
-typedef struct M2MiClient_st {
-	char * host;
-	char * m2mi_uid;
-	char * m2mi_secret;
-	access_token * token;
-} M2MiClient;
+#include "../json/json.h"
+#include "../crypto/crypto.h"
+#include "../https/HTTPSClient.h"
 
-M2MiClient * new_m2mi_client(const char * config_file);
-int client_send(M2MiClient * client, char * data);
-int client_close(M2MiClient * client);
+#define fail()	return __LINE__
+#define done()  return 0;
+
+static int test_passed = 0;
+static int test_failed = 0;
+
+static void test(int (*func)(void), const char *name) {
+  printf("Running Test [%s]:\n", name);
+	int r = func();
+	if (r == 0) {
+		test_passed++;
+    printf("---> test result: SUCCESS.\n");
+	} else {
+		test_failed++;
+		printf("---> test result: FAILED at line %d.\n", r);
+	}
+}
+
+void run_test(void);
 
 #endif

@@ -17,28 +17,25 @@
  *     Julien Niset
  */
 
-#ifndef _M2MiClient_h
-#define _M2MiClient_h
+#ifndef _crypto_util_h
+#define _crypto_util_h
 
-#include "https/HTTPSClient.h"
-#include "json/json.h"
-#include "json/jsmn.h"
-#include "log/log.h"
-#include "auth/openam.h"
-#include "auth/token.h"
-#include "auth/m2mi.h"
-#include "crypto/crypto.h"
+#include "../log/log.h"
+
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
-typedef struct M2MiClient_st {
-	char * host;
-	char * m2mi_uid;
-	char * m2mi_secret;
-	access_token * token;
-} M2MiClient;
+#include <openssl/ssl.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+#include <openssl/conf.h>
+#include <openssl/buffer.h>
 
-M2MiClient * new_m2mi_client(const char * config_file);
-int client_send(M2MiClient * client, char * data);
-int client_close(M2MiClient * client);
+char * sha256_hash_file(const char * file);
+char * rsa_sha256_sign_file(RSA * privKey, const char * file);
+RSA * load_rsa_private_key(const char * priv_key_file);
+char * to_base64(const char * str);
 
 #endif

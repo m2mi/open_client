@@ -14,15 +14,13 @@
  * limitations under the License.
  *
  * Contributors:
- *     Julien Niset 
+ *     Julien Niset
  */
 
 #include "HTTPSClient.h"
-#include "../log/log.h"
 
-
-const char * PREFERRED_CIPHERS = "ECDHE-RSA-SPECK256-SHA256"; //"ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL"; 
-const char * TRUST_CERTS = "../resources/geotrust.pem";
+const char * PREFERRED_CIPHERS = "ECDHE-RSA-SPECK256-SHA256"; //"ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL";
+const char * TRUST_CERTS = "./resources/geotrust.pem";
 const long FLAGS = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
 
 static const char * CONTENT_TYPE_STR[] = {"application/json", "application/x-www-form-urlencoded"};
@@ -35,7 +33,7 @@ static void print_san_name(const char* label, X509* const cert);
 static int verify_callback(int preverify, X509_STORE_CTX* x509_ctx);
 #endif
 
-HTTPSClient * new_client(char * url) {
+HTTPSClient * new_https_client(const char * url) {
 
 	HTTPSClient *client = NULL;
 	URL *tmp = NULL;
@@ -62,15 +60,15 @@ HTTPSClient * new_client(char * url) {
     return client;
 }
 
-int client_set_content_type(HTTPSClient *client, CONTENT_TYPE type) {
-	
+int https_set_content_type(HTTPSClient *client, CONTENT_TYPE type) {
+
 	client->content_type = malloc(35);
 	snprintf(client->content_type, 35, "%s", CONTENT_TYPE_STR[type]);
 	return 1;
 }
 
-int client_set_basic_auth(HTTPSClient *client, char * username, char * password) {
-	
+int https_set_basic_auth(HTTPSClient *client, char * username, char * password) {
+
 	BIO *b64, *bio;
 	BUF_MEM *bio_ptr;
 
@@ -82,20 +80,20 @@ int client_set_basic_auth(HTTPSClient *client, char * username, char * password)
 	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 	BIO_push(b64, bio);
 	BIO_write(b64, credentials, strlen(credentials));
-	BIO_flush(b64);   
-    BIO_get_mem_ptr(bio, &bio_ptr); 
-    BIO_set_close(bio, BIO_NOCLOSE);   
-    BIO_free_all(b64); 
+	BIO_flush(b64);
+  BIO_get_mem_ptr(bio, &bio_ptr);
+  BIO_set_close(bio, BIO_NOCLOSE);
+  BIO_free_all(b64);
 
-    client->authorization = calloc(bio_ptr->length + 9, sizeof(char));
-    snprintf(client->authorization, bio_ptr->length + 9, "Basic %s", bio_ptr->data);
+  client->authorization = calloc(bio_ptr->length + 9, sizeof(char));
+  snprintf(client->authorization, bio_ptr->length + 9, "Basic %s", bio_ptr->data);
 
-    debug("Adding authorization header: %s", client->authorization);
-	
+  debug("Adding authorization header: %s", client->authorization);
+
 	return 1;
 }
 
-int client_set_oauth2(HTTPSClient *client, char * token) {
+int https_set_oauth2(HTTPSClient *client, char * token) {
 
     int len = strlen(token) + 10;
     client->authorization = malloc(len);
@@ -104,14 +102,14 @@ int client_set_oauth2(HTTPSClient *client, char * token) {
     return 1;
 }
 
-int client_set_header(HTTPSClient *client, char * header) {
+int https_set_header(HTTPSClient *client, char * header) {
 
 	client->header = malloc(200);
 	snprintf(client->header, 200, "%s", header);
 	return 1;
 }
 
-int client_open(HTTPSClient *client) {
+int https_open(HTTPSClient *client) {
 
 	int res;
 	SSL_CTX *ctx = NULL;
@@ -134,22 +132,22 @@ int client_open(HTTPSClient *client) {
     }
 
     init_openssl_library();
-    
-    const SSL_METHOD* method = TLS_method();    
+
+    const SSL_METHOD* method = TLS_method();
     if(!(NULL != method))
     {
         error("Failed to get SSLv23_method.");
         ssl_error();
         return 0;
     }
-    
-    ctx = SSL_CTX_new(method);    
+
+    ctx = SSL_CTX_new(method);
     if(!(ctx != NULL))
     {
         error("Failed to create new context.");
         return 0;
     }
-    
+
 	#ifndef NDEBUG
 	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 	#else
@@ -158,9 +156,9 @@ int client_open(HTTPSClient *client) {
 
     SSL_CTX_set_verify_depth(ctx, 5);
 	SSL_CTX_set_options(ctx, FLAGS);
-    
+
     char realPath [PATH_MAX];
-    realpath(TRUST_CERTS, realPath); 
+    realpath(TRUST_CERTS, realPath);
     debug("Trusted Certificate Chain located in %s", realPath);
     res = SSL_CTX_load_verify_locations(ctx, realPath, NULL);
     if(!(1 == res))
@@ -169,17 +167,17 @@ int client_open(HTTPSClient *client) {
         ssl_error();
        // return 0;
     }
-    
-    web = BIO_new_ssl_connect(ctx);    
+
+    web = BIO_new_ssl_connect(ctx);
     if(!(web != NULL))
     {
         debug("Failed to create SSL connection object.");
         ssl_error();
         return 0;
     }
-    
+
     char tmp[256];
-    snprintf(tmp, sizeof(tmp), "%s:%d", url->hostname, url->port); 
+    snprintf(tmp, sizeof(tmp), "%s:%d", url->hostname, url->port);
     res = BIO_set_conn_hostname(web, tmp);
     if(!(1 == res))
     {
@@ -211,7 +209,7 @@ int client_open(HTTPSClient *client) {
         ssl_error();
         return 0;
     }
-    
+
     res = BIO_do_connect(web);
     if(!(1 == res))
     {
@@ -219,7 +217,7 @@ int client_open(HTTPSClient *client) {
         ssl_error();
        	return 0;
     }
-    
+
     res = BIO_do_handshake(web);
     if(!(1 == res))
     {
@@ -227,12 +225,12 @@ int client_open(HTTPSClient *client) {
         ssl_error();
         return 0;
     }
-    
+
     /* Validate received certificate */
     X509* cert = SSL_get_peer_certificate(ssl);
-    if(cert) { 
-    	X509_free(cert); 
-    } 
+    if(cert) {
+    	X509_free(cert);
+    }
     if(NULL == cert) {
         debug("No certificate presented by peer.");
         ssl_error();
@@ -255,21 +253,21 @@ int client_open(HTTPSClient *client) {
 
 }
 
-http_response * client_get(HTTPSClient *client) {
+http_response * https_get(HTTPSClient *client) {
 
 	http_response * response = NULL;
     const int MAX_REQUEST_SIZE = 1000;
     const int MAX_DATA_SIZE = 2000;
     char * request = malloc(MAX_REQUEST_SIZE);
     void * tmp = NULL;
-    
+
     debug("Sending HTTP GET request...");
 
     response = malloc(sizeof(http_response));
     response->data = calloc(MAX_DATA_SIZE, sizeof(char));
-	        
-	/* Build the request */   
-    int length = 0;                                                           
+
+	/* Build the request */
+    int length = 0;
     length += snprintf(request + length, MAX_REQUEST_SIZE - length, "GET %s HTTP/1.1\r\nHost: %s\r\n", client->url->path, client->url->hostname );
 	if(NULL != client->authorization) {
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Authorization: %s\r\n", client->authorization);
@@ -280,12 +278,12 @@ http_response * client_get(HTTPSClient *client) {
 	if(NULL != client->header) {
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n", client->header);
 	}
-	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n\r\n"); 
-	
-	/* Send the request */ 
+	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n\r\n");
+
+	/* Send the request */
 	BIO_puts(client->connection->bio, request);
-        
-    /* Get the response */    
+
+    /* Get the response */
     int len = 0;
     int size = 0;
     char * buff = malloc(MAX_DATA_SIZE);
@@ -305,28 +303,28 @@ http_response * client_get(HTTPSClient *client) {
     } while (len > 0 || BIO_should_retry(client->connection->bio));
 
     /* Parse the response to get the http code */
-    sscanf(response->data, "%*s %d %*s", &(response->code)); 
+    sscanf(response->data, "%*s %d %*s", &(response->code));
 
     debug("done.");
 
     return response;
 }
 
-http_response * client_post(HTTPSClient *client, char * data) {
+http_response * https_post(HTTPSClient *client, char * data) {
 
 	http_response * response = NULL;
     const int MAX_REQUEST_SIZE = 1000;
     const int MAX_DATA_SIZE = 2000;
     char * request = malloc(MAX_REQUEST_SIZE);
     void * tmp = NULL;
-    
+
     debug("Sending HTTP POST request...");
 
     response = malloc(sizeof(http_response));
     response->data = calloc(MAX_DATA_SIZE, sizeof(char));
-	        
-	/* Build the request */  
-    int length = 0;                                                            
+
+	/* Build the request */
+    int length = 0;
     length += snprintf(request + length, MAX_REQUEST_SIZE - length, "POST %s HTTP/1.1\r\nHost: %s\r\n", client->url->path, client->url->hostname );
 	if(NULL != client->authorization) {
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Authorization: %s\r\n", client->authorization);
@@ -337,11 +335,11 @@ http_response * client_post(HTTPSClient *client, char * data) {
 	if(NULL != client->header) {
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n",client->header);
 	}
-	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n"); 
+	length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Connection: close\r\n");
 	if(NULL != data) {
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Length: %lu\r\n\r\n", strlen(data));
-		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n", data); 
-	} 
+		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "%s\r\n", data);
+	}
 	else {
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "Content-Length: %d\r\n", 0);
 		length += snprintf(request + length, MAX_REQUEST_SIZE - length, "\r\n\r\n");
@@ -349,17 +347,17 @@ http_response * client_post(HTTPSClient *client, char * data) {
 	#ifdef NDEBUG
 	printf("%s", request);
 	#endif
-	
-	/* Send the request */ 
+
+	/* Send the request */
 	BIO_puts(client->connection->bio, request);
-        
-    /* Get the response */    
+
+    /* Get the response */
     int len = 0;
     int size = 0;
     char * buff = malloc(MAX_DATA_SIZE);
     do {
         len = BIO_read(client->connection->bio, buff, sizeof(buff));
-        if(len > 0) { 
+        if(len > 0) {
         	if(size + len > MAX_DATA_SIZE) {
         		tmp = realloc(response->data, MAX_DATA_SIZE);
                 if(NULL == tmp) {
@@ -373,27 +371,27 @@ http_response * client_post(HTTPSClient *client, char * data) {
     } while (len > 0 || BIO_should_retry(client->connection->bio));
     debug("response %s", response->data);
     /* Parse the response to get the http code */
-    sscanf(response->data, "%*s %d %*s", &(response->code)); 
+    sscanf(response->data, "%*s %d %*s", &(response->code));
 
     debug("done.");
 
     return response;
 }
 
-int client_close(HTTPSClient *client) {
-    
+int https_close(HTTPSClient *client) {
+
     debug("Closing HTTPS connection...");
 
     if(NULL != client->connection) {
     	if(NULL != client->connection->bio)
     		BIO_free_all(client->connection->bio);
-    
+
     	if(NULL != client->connection->ctx)
         	SSL_CTX_free(client->connection->ctx);
 
         free(client->connection);
     }
-	
+
 
     if(NULL != client->url)
     	free(client->url);
@@ -407,7 +405,7 @@ static void init_openssl_library(void)
 {
     (void)SSL_library_init();
     SSL_load_error_strings();
-                            
+
     #if defined (OPENSSL_THREADS)
         debug("Warning: thread locking is not implemented");
     #endif
@@ -429,31 +427,31 @@ static void print_cn_name(const char* label, X509_NAME* const name)
 {
     int idx = -1, success = 0;
     unsigned char *utf8 = NULL;
-    
+
     do
     {
         if(!name) break; /* failed */
-        
+
         idx = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
         if(!(idx > -1))  break; /* failed */
-        
+
         X509_NAME_ENTRY* entry = X509_NAME_get_entry(name, idx);
         if(!entry) break; /* failed */
-        
+
         ASN1_STRING* data = X509_NAME_ENTRY_get_data(entry);
         if(!data) break; /* failed */
-        
+
         int length = ASN1_STRING_to_UTF8(&utf8, data);
         if(!utf8 || !(length > 0))  break; /* failed */
-        
+
         debug("%s: %s", label, utf8);
         success = 1;
-        
+
     } while (0);
-    
+
     if(utf8)
         OPENSSL_free(utf8);
-    
+
     if(!success)
         debug("%s: <not available>", label);
 }
@@ -463,35 +461,35 @@ static void print_san_name(const char* label, X509* const cert)
     int success = 0;
     GENERAL_NAMES* names = NULL;
     unsigned char* utf8 = NULL;
-    
+
     do
     {
         if(!cert) break; /* failed */
-        
+
         names = X509_get_ext_d2i(cert, NID_subject_alt_name, 0, 0 );
         if(!names) break;
-        
+
         int i = 0, count = sk_GENERAL_NAME_num(names);
         if(!count) break; /* failed */
-        
+
         for( i = 0; i < count; ++i )
         {
             GENERAL_NAME* entry = sk_GENERAL_NAME_value(names, i);
             if(!entry) continue;
-            
+
             if(GEN_DNS == entry->type)
             {
                 int len1 = 0, len2 = -1;
-                
+
                 len1 = ASN1_STRING_to_UTF8(&utf8, entry->d.dNSName);
                 if(utf8) {
                     len2 = (int)strlen((const char*)utf8);
                 }
-                
+
                 if(len1 != len2) {
                     debug("Strlen and ASN1_STRING size do not match (embedded null?): %d vs %d", len2, len1);
                 }
-                
+
                 /* If there's a problem with string lengths, then     */
                 /* we skip the candidate and move on to the next.     */
                 /* Another policy would be to fails since it probably */
@@ -500,7 +498,7 @@ static void print_san_name(const char* label, X509* const cert)
                     debug("  %s: %s", label, utf8);
                     success = 1;
                 }
-                
+
                 if(utf8) {
                     OPENSSL_free(utf8), utf8 = NULL;
                 }
@@ -512,40 +510,40 @@ static void print_san_name(const char* label, X509* const cert)
         }
 
     } while (0);
-    
+
     if(names)
         GENERAL_NAMES_free(names);
-    
+
     if(utf8)
         OPENSSL_free(utf8);
-    
+
     if(!success)
         error("%s: <not available>", label);
-    
+
 }
 
 static int verify_callback(int preverify, X509_STORE_CTX* x509_ctx)
-{    
+{
     int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
     int err = X509_STORE_CTX_get_error(x509_ctx);
-    
+
     X509* cert = X509_STORE_CTX_get_current_cert(x509_ctx);
     X509_NAME* iname = cert ? X509_get_issuer_name(cert) : NULL;
     X509_NAME* sname = cert ? X509_get_subject_name(cert) : NULL;
-    
+
     debug("verify_callback (depth=%d)(preverify=%d)", depth, preverify);
-    
+
     /* Issuer is the authority we trust that warrants nothing useful */
     print_cn_name("Issuer (cn)", iname);
-    
+
     /* Subject is who the certificate is issued to by the authority  */
     print_cn_name("Subject (cn)", sname);
-    
+
     if(depth == 0) {
         /* If depth is 0, its the server's certificate. Print the SANs */
         print_san_name("Subject (san)", cert);
     }
-    
+
     if(preverify == 0)
     {
         if(err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)

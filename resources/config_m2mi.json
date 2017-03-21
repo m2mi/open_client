@@ -1,0 +1,10 @@
+{
+  "node": "https://node3.m2mi.net:8080",
+  "auth_issuer": "m2mi",
+  "auth_url": "https://portal.m2mi.net/m2mi/auth/token",
+  "auth_args": {
+    "pubKey":"publicKey.pem",
+    "privKey":"privateKey.pem"
+  }
+
+}

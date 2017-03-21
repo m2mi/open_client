@@ -1,0 +1,11 @@
+{
+  "node": "https://node3.m2mi.net:8080",
+  "auth": {
+    "issuer": "openam",
+    "url": "https://node2.m2mi.net:9443",
+    "m2mi_uid":"m2mi",
+    "m2mi_pwd":"password2",
+    "app_uid": "ddf3f076-1568-4913-8f05-8eced7157995",
+    "app_pwd": "tW04t31G6yr"
+  }
+}

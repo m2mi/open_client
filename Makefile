@@ -17,7 +17,8 @@ $(TARGET): build $(OBJECTS)
 build:
 	@mkdir -p bin
 
-dev:CFLAGS+=-DNDEBUG
+dev:
+	CFLAGS+=-DNDEBUG
 dev: all
 
 clean:

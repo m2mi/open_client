@@ -17,28 +17,26 @@
  *     Julien Niset
  */
 
-#ifndef _M2MiClient_h
-#define _M2MiClient_h
+#include "json.h"
 
-#include "https/HTTPSClient.h"
-#include "json/json.h"
-#include "json/jsmn.h"
-#include "log/log.h"
-#include "auth/openam.h"
-#include "auth/token.h"
-#include "auth/m2mi.h"
-#include "crypto/crypto.h"
-#include <string.h>
+char * json_from_file(const char * json_file) {
 
-typedef struct M2MiClient_st {
-	char * host;
-	char * m2mi_uid;
-	char * m2mi_secret;
-	access_token * token;
-} M2MiClient;
+  char * json_str;
+	int file_size;
+	FILE * file = fopen(json_file, "rb");
 
-M2MiClient * new_m2mi_client(const char * config_file);
-int client_send(M2MiClient * client, char * data);
-int client_close(M2MiClient * client);
+	if(file == NULL) {
+		error("Failed to load configuration file");
+		return NULL;
+	}
+	fseek(file, 0, SEEK_END);
+	file_size = ftell(file);
+	rewind(file);
+	json_str = malloc((file_size + 1) * (sizeof(char)));
+	fread(json_str, sizeof(char), file_size, file);
+	fclose(file);
+	json_str[file_size] = 0;
 
-#endif
+  return json_str;
+
+}
