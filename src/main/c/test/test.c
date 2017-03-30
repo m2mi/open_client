@@ -100,7 +100,7 @@ int test_HTTPS_client(void) {
 /* test authentication with M2Mi */
 int test_get_m2mi_token(void) {
 
-  char * m2mi_url = "https://node2.m2mi.net:8080/m2mi_auth-2.3-SNAPSHOT/auth/token";
+  char * m2mi_url = "https://node2.m2mi.net:8443/m2mi_auth-2.3-SNAPSHOT/v2/auth/token";
   char * args[] = {"./resources/publicKey.pem", "./resources/privateKey.pem"};
 
   access_token * token = get_m2mi_token(m2mi_url, args);

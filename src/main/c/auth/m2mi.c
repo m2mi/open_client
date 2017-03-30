@@ -27,29 +27,27 @@
    char * priv_key_file = args[1];
 
    /* We calculate the hash of the public key */
-   char * pub_hash = sha256_hash_file(pub_key_file); printf("pub_hash %s\n", pub_hash);
+   char * pub_hash = sha256_hash_file(pub_key_file);
    /* We load the private key */
    RSA * privKey = load_rsa_private_key(priv_key_file);
    /* We sign the hash with the private key */
-   char * signed_hash = rsa_sha256_sign_file(privKey, pub_key_file); printf("signed_hash %s\n", signed_hash);
+   char * signed_hash = rsa_sha256_sign_file(privKey, pub_key_file);
 
    /* We create the request payload */
-   int len = strlen(pub_hash) + strlen(signed_hash) + 25;
+   int len = strlen(pub_hash) + strlen(signed_hash) + 45;
    char * data = calloc(len, sizeof(char));
-   snprintf(data, len, "{\"id\": \"%s\", \"secret\": \"%s\"}",pub_hash, signed_hash); printf("data %s\n", data);
+   snprintf(data, len, "{\"id\": \"%s\", \"secret\": \"%s\", \"type\": \"device\"}",pub_hash, signed_hash);
 
    /* We send the request */
    HTTPSClient * https = new_https_client(m2mi_url);
    https_open(https);
-   https_set_content_type(https, URL_ENCODED);
+   https_set_content_type(https, JSON);
    http_response * response = https_post(https, data);
    https_close(https);
 
-   printf("ok\n");
-
    if(200 == response->code) {
 
-     debug("Parsing response from M2Mi."); printf("%s\n", response->data);
+     debug("Parsing response from M2Mi.");
 
   		// int i;
   		// int r;

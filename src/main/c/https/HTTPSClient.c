@@ -255,16 +255,12 @@ int https_open(HTTPSClient *client) {
 
 http_response * https_get(HTTPSClient *client) {
 
-	http_response * response = NULL;
+		http_response * response = NULL;
     const int MAX_REQUEST_SIZE = 1000;
     const int MAX_DATA_SIZE = 2000;
     char * request = malloc(MAX_REQUEST_SIZE);
-    void * tmp = NULL;
 
     debug("Sending HTTP GET request...");
-
-    response = malloc(sizeof(http_response));
-    response->data = calloc(MAX_DATA_SIZE, sizeof(char));
 
 	/* Build the request */
     int length = 0;
@@ -284,23 +280,27 @@ http_response * https_get(HTTPSClient *client) {
 	BIO_puts(client->connection->bio, request);
 
     /* Get the response */
-    int len = 0;
-    int size = 0;
     char * buff = malloc(MAX_DATA_SIZE);
-    do {
-        len = BIO_read(client->connection->bio, buff, sizeof(buff));
-        if(len > 0) {
-        	if(size + len > MAX_DATA_SIZE) {
-        		tmp = realloc(response->data, MAX_DATA_SIZE);
-                if(NULL == tmp) {
-                    error("Failed to allocate sufficient memory for response.");
-                    return NULL;
-                }
-        	}
-        	memcpy(response->data + size, buff, len);
-        }
-        size += len;
-    } while (len > 0 || BIO_should_retry(client->connection->bio));
+		int bytes_read;
+		int cur_pos = 0;
+		int space_left = MAX_DATA_SIZE;
+		while((bytes_read = BIO_read(client->connection->bio, buff + cur_pos, space_left)) > 0 || BIO_should_retry(client->connection->bio)) {
+			cur_pos += bytes_read;
+			space_left -= bytes_read;
+			if(space_left < (MAX_DATA_SIZE / 2)) {
+				buff = realloc(buff, cur_pos + space_left + MAX_DATA_SIZE);
+				if(buff == NULL) {
+					error("Failed to allocate sufficient memory for response.");
+					return NULL;
+				}
+				space_left += MAX_DATA_SIZE;
+			}
+		}
+
+	 response = malloc(sizeof(http_response));
+	 response->data = calloc(cur_pos, sizeof(char));
+	 memcpy(response->data, buff, cur_pos);
+	 free(buff);
 
     /* Parse the response to get the http code */
     sscanf(response->data, "%*s %d %*s", &(response->code));
@@ -316,12 +316,8 @@ http_response * https_post(HTTPSClient *client, char * data) {
     const int MAX_REQUEST_SIZE = 1000;
     const int MAX_DATA_SIZE = 2000;
     char * request = malloc(MAX_REQUEST_SIZE);
-    void * tmp = NULL;
 
     debug("Sending HTTP POST request...");
-
-    response = malloc(sizeof(http_response));
-    response->data = calloc(MAX_DATA_SIZE, sizeof(char));
 
 	/* Build the request */
     int length = 0;
@@ -352,23 +348,28 @@ http_response * https_post(HTTPSClient *client, char * data) {
 	BIO_puts(client->connection->bio, request);
 
     /* Get the response */
-    int len = 0;
-    int size = 0;
     char * buff = malloc(MAX_DATA_SIZE);
-    do {
-        len = BIO_read(client->connection->bio, buff, sizeof(buff));
-        if(len > 0) {
-        	if(size + len > MAX_DATA_SIZE) {
-        		tmp = realloc(response->data, MAX_DATA_SIZE);
-                if(NULL == tmp) {
-                    error("Failed to allocate sufficient memory for response.");
-                    return NULL;
-                }
-        	}
-        	memcpy(response->data + size, buff, len);
-        }
-        size += len;
-    } while (len > 0 || BIO_should_retry(client->connection->bio));
+		int bytes_read;
+		int cur_pos = 0;
+		int space_left = MAX_DATA_SIZE;
+		while((bytes_read = BIO_read(client->connection->bio, buff + cur_pos, space_left)) > 0 || BIO_should_retry(client->connection->bio)) {
+			cur_pos += bytes_read;
+			space_left -= bytes_read;
+			if(space_left < (MAX_DATA_SIZE / 2)) {
+				buff = realloc(buff, cur_pos + space_left + MAX_DATA_SIZE);
+				if(buff == NULL) {
+					error("Failed to allocate sufficient memory for response.");
+					return NULL;
+				}
+				space_left += MAX_DATA_SIZE;
+			}
+		}
+
+		response = malloc(sizeof(http_response));
+		response->data = calloc(cur_pos, sizeof(char));
+		memcpy(response->data, buff, cur_pos);
+		free(buff);
+		
     debug("response %s", response->data);
     /* Parse the response to get the http code */
     sscanf(response->data, "%*s %d %*s", &(response->code));

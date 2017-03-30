@@ -87,7 +87,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
 
    unsigned char * output = NULL;
    FILE * fd = NULL;
-   EVP_MD_CTX* ctx = NULL;
+   EVP_MD_CTX * ctx = NULL;
    unsigned char * buffer = NULL;
 
    fd = fopen(file, "r");
@@ -129,8 +129,10 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
      error("Failed to malloc buffer to read file.");
      goto done;
    }
-   while(fread(buffer, 1, bufSize, fd)) { // Attention ici, verifier que c'est buffer et bufSize
-     if(EVP_DigestSignUpdate(ctx, buffer, bufSize) != 1) {
+   size_t bRead = 0;
+   while((bRead = fread(buffer, 1, bufSize, fd))) { // Attention ici, verifier que c'est buffer et bufSize
+    printf("read %zu bytes\n", bRead);
+     if(EVP_DigestSignUpdate(ctx, buffer, bRead) != 1) {
          error("Failed to update digest.");
          goto done;
      }
