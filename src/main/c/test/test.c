@@ -78,7 +78,7 @@ int test_to_base64(void) {
 int test_HTTPS_client(void) {
 
   http_response * response;
-	char * url = (char *)"https://www.google.com:443/#q=m2mi";
+	char * url = (char *)"https://www.google.be:443/";
 
 	HTTPSClient *client = new_https_client(url);
   if(client == NULL)
@@ -89,12 +89,23 @@ int test_HTTPS_client(void) {
     fail();
 	if(https_set_content_type(client, URL_ENCODED) != 1)
     fail();
-	response = https_post(client, "Hello Google");
-	if(response->code != 200)
+	response = https_get(client);
+	if(response->code != 200 && response->code != 302)
     fail();
 	if(https_close(client) != 1)
     fail();
+  done();
+}
 
+/* test authentication with M2Mi */
+int test_get_m2mi_token(void) {
+
+  char * m2mi_url = "https://node2.m2mi.net:8080/m2mi_auth-2.3-SNAPSHOT/auth/token";
+  char * args[] = {"./resources/publicKey.pem", "./resources/privateKey.pem"};
+
+  access_token * token = get_m2mi_token(m2mi_url, args);
+  if(token == NULL)
+    fail();
   done();
 }
 
@@ -104,5 +115,6 @@ void run_test(void) {
   test(test_sha256_hash_file, "hash file with sha256");
   test(test_rsa_sha256_sign_file, "sign file with sha256 and rsa");
   test(test_to_base64, "encode string to base 64");
-  test(test_HTTPS_client, "post data to google over https");
+  test(test_HTTPS_client, "get data from google over https");
+  test(test_get_m2mi_token, "get JWT token from M2Mi");
 }

@@ -19,7 +19,7 @@
 
 #include "HTTPSClient.h"
 
-const char * PREFERRED_CIPHERS = "ECDHE-RSA-SPECK256-SHA256"; //"ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL";
+const char * PREFERRED_CIPHERS = "ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL"; //"ECDHE-RSA-SPECK256-SHA256";
 const char * TRUST_CERTS = "./resources/geotrust.pem";
 const long FLAGS = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
 
@@ -163,7 +163,7 @@ int https_open(HTTPSClient *client) {
     res = SSL_CTX_load_verify_locations(ctx, realPath, NULL);
     if(!(1 == res))
     {
-        debug("Failed to load trusted Certificate Chain.");
+        error("Failed to load trusted Certificate Chain.");
         ssl_error();
        // return 0;
     }
@@ -171,7 +171,7 @@ int https_open(HTTPSClient *client) {
     web = BIO_new_ssl_connect(ctx);
     if(!(web != NULL))
     {
-        debug("Failed to create SSL connection object.");
+        error("Failed to create SSL connection object.");
         ssl_error();
         return 0;
     }
@@ -181,7 +181,7 @@ int https_open(HTTPSClient *client) {
     res = BIO_set_conn_hostname(web, tmp);
     if(!(1 == res))
     {
-        debug("Failed to set hostname and port.");
+        error("Failed to set hostname and port.");
         ssl_error();
         return 0;
     }
@@ -189,7 +189,7 @@ int https_open(HTTPSClient *client) {
     BIO_get_ssl(web, &ssl);
     if(!(ssl != NULL))
     {
-        debug("Failed to get SSL connection object.");
+        error("Failed to get SSL connection object.");
         ssl_error();
         return 0;
     }
@@ -197,7 +197,7 @@ int https_open(HTTPSClient *client) {
     res = SSL_set_cipher_list(ssl, PREFERRED_CIPHERS);
     if(!(1 == res))
     {
-        debug("Failed to set cipher list");
+        error("Failed to set cipher list");
         ssl_error();
         return 0;
     }
@@ -205,7 +205,7 @@ int https_open(HTTPSClient *client) {
     res = SSL_set_tlsext_host_name(ssl, url->hostname);
     if(!(1 == res))
     {
-        debug("Failed to set tlsext hostname.");
+        error("Failed to set tlsext hostname.");
         ssl_error();
         return 0;
     }
@@ -213,7 +213,7 @@ int https_open(HTTPSClient *client) {
     res = BIO_do_connect(web);
     if(!(1 == res))
     {
-        debug("Connection error.");
+        error("Connection error.");
         ssl_error();
        	return 0;
     }
@@ -221,7 +221,7 @@ int https_open(HTTPSClient *client) {
     res = BIO_do_handshake(web);
     if(!(1 == res))
     {
-        debug("Handshake error.");
+        error("Handshake error.");
         ssl_error();
         return 0;
     }
@@ -232,14 +232,14 @@ int https_open(HTTPSClient *client) {
     	X509_free(cert);
     }
     if(NULL == cert) {
-        debug("No certificate presented by peer.");
+        error("No certificate presented by peer.");
         ssl_error();
         return 0;
     }
     res = SSL_get_verify_result(ssl);
     if(!(X509_V_OK == res))
     {
-        debug("Certificate chain verification failed.");
+        error("Certificate chain verification failed.");
         ssl_error();
         return 0;
     }

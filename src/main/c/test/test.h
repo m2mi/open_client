@@ -25,6 +25,7 @@
 #include "../json/json.h"
 #include "../crypto/crypto.h"
 #include "../https/HTTPSClient.h"
+#include "../auth/m2mi.h"
 
 #define fail()	return __LINE__
 #define done()  return 0;

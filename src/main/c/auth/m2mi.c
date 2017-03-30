@@ -27,16 +27,16 @@
    char * priv_key_file = args[1];
 
    /* We calculate the hash of the public key */
-   char * pub_hash = sha256_hash_file(pub_key_file);
+   char * pub_hash = sha256_hash_file(pub_key_file); printf("pub_hash %s\n", pub_hash);
    /* We load the private key */
    RSA * privKey = load_rsa_private_key(priv_key_file);
    /* We sign the hash with the private key */
-   char * signed_hash = rsa_sha256_sign_file(privKey, pub_key_file);
+   char * signed_hash = rsa_sha256_sign_file(privKey, pub_key_file); printf("signed_hash %s\n", signed_hash);
 
    /* We create the request payload */
    int len = strlen(pub_hash) + strlen(signed_hash) + 25;
    char * data = calloc(len, sizeof(char));
-   snprintf(data, len, "{\"id\": \"%s\", \"secret\": \"%s\"}",pub_hash, signed_hash);
+   snprintf(data, len, "{\"id\": \"%s\", \"secret\": \"%s\"}",pub_hash, signed_hash); printf("data %s\n", data);
 
    /* We send the request */
    HTTPSClient * https = new_https_client(m2mi_url);
@@ -45,57 +45,59 @@
    http_response * response = https_post(https, data);
    https_close(https);
 
+   printf("ok\n");
+
    if(200 == response->code) {
 
-     debug("Parsing response from OpenAM.");
+     debug("Parsing response from M2Mi."); printf("%s\n", response->data);
 
-  		int i;
-  		int r;
-  		jsmn_parser p;
-  		jsmntok_t t[15]; /* We expect no more than 15 tokens */
-
-  		while(*response->data != '{') {
-  			response->data++;
-  		}
-  		char * json_str = response->data;
-  		while(*response->data != '}') {
-  			response->data++;
-  		}
-  		*(++response->data) = '\0';
-
-  		jsmn_init(&p);
-  		r = jsmn_parse(&p, json_str, strlen(json_str), t, sizeof(t)/sizeof(t[0]));
-  		if (r < 1 || t[0].type != JSMN_OBJECT) {
-  			error("Failed to parse JSON with error %d.", r);
-  			return NULL;
-  		}
-
-  		access_token * token = malloc(sizeof(access_token));
-  		token->issuer = strdup(m2mi_url);
-
-  		/* We loop over the keys */
-  		for (i = 1; i < r; i++) {
-  			if (jsoneq(json_str, &t[i], "access_token") == 0) {
-  				token->access = strndup(json_str + t[i+1].start, t[i+1].end-t[i+1].start);
-  				i++;
-  			} else if (jsoneq(json_str, &t[i], "refresh_token") == 0) {
-  				token->refresh = strndup(json_str + t[i+1].start, t[i+1].end-t[i+1].start);
-  				i++;
-  			} else if (jsoneq(json_str, &t[i], "token_type") == 0) {
-  				token->type = strndup(json_str + t[i+1].start, t[i+1].end-t[i+1].start);
-  				i++;
-  			} else if (jsoneq(json_str, &t[i], "expires_in") == 0) {
-  				token->expires = strtol(json_str + t[i+1].start, NULL, 0);
-  				i++;
-  			} else {
-  				// we ignore the other keys (scope and id_token)
-  				i++;
-  			}
-  		}
-
-  		debug("Token: type = %s, issuer = %s, access = %s, expires = %ld", token->type, token->issuer, token->access, token->expires);
-
-  		return token;
+  		// int i;
+  		// int r;
+  		// jsmn_parser p;
+  		// jsmntok_t t[15]; /* We expect no more than 15 tokens */
+      //
+  		// while(*response->data != '{') {
+  		// 	response->data++;
+  		// }
+  		// char * json_str = response->data;
+  		// while(*response->data != '}') {
+  		// 	response->data++;
+  		// }
+  		// *(++response->data) = '\0';
+      //
+  		// jsmn_init(&p);
+  		// r = jsmn_parse(&p, json_str, strlen(json_str), t, sizeof(t)/sizeof(t[0]));
+  		// if (r < 1 || t[0].type != JSMN_OBJECT) {
+  		// 	error("Failed to parse JSON with error %d.", r);
+  		// 	return NULL;
+  		// }
+      //
+  		// access_token * token = malloc(sizeof(access_token));
+  		// token->issuer = strdup(m2mi_url);
+      //
+  		// /* We loop over the keys */
+  		// for (i = 1; i < r; i++) {
+  		// 	if (jsoneq(json_str, &t[i], "access_token") == 0) {
+  		// 		token->access = strndup(json_str + t[i+1].start, t[i+1].end-t[i+1].start);
+  		// 		i++;
+  		// 	} else if (jsoneq(json_str, &t[i], "refresh_token") == 0) {
+  		// 		token->refresh = strndup(json_str + t[i+1].start, t[i+1].end-t[i+1].start);
+  		// 		i++;
+  		// 	} else if (jsoneq(json_str, &t[i], "token_type") == 0) {
+  		// 		token->type = strndup(json_str + t[i+1].start, t[i+1].end-t[i+1].start);
+  		// 		i++;
+  		// 	} else if (jsoneq(json_str, &t[i], "expires_in") == 0) {
+  		// 		token->expires = strtol(json_str + t[i+1].start, NULL, 0);
+  		// 		i++;
+  		// 	} else {
+  		// 		// we ignore the other keys (scope and id_token)
+  		// 		i++;
+  		// 	}
+  		// }
+      //
+  		// debug("Token: type = %s, issuer = %s, access = %s, expires = %ld", token->type, token->issuer, token->access, token->expires);
+      //
+  		// return token;
   	}
   	else {
   		error("Failed to get token. HTTP error %d.", response->code);
