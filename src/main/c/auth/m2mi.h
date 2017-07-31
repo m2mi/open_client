@@ -26,6 +26,8 @@
 #include "token.h"
 #include "../crypto/crypto.h"
 
-access_token * get_m2mi_token(const char * url, char** args);
+access_token * get_m2mi_token(auth_config * auth_config);
+access_token * refresh_m2mi_token(auth_config * auth_config, access_token* token);
+int update_certificate(auth_config * auth_config);
 
 #endif

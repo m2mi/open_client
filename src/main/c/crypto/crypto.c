@@ -20,7 +20,7 @@
  #include "crypto.h"
 
 char * sha256_hash_file(const char * file) {
-
+  
   FILE * fd = NULL;
   EVP_MD_CTX * mdctx = NULL;
   unsigned char * buffer = NULL;
@@ -49,7 +49,7 @@ char * sha256_hash_file(const char * file) {
  		 goto done;
    }
    int bytesRead = 0;
-   while((bytesRead = fread(buffer, 1, bufSize, fd))) {
+   while((bytesRead = fread(buffer, 1, bufSize, fd)) > 0) {
       if(1 != EVP_DigestUpdate(mdctx, buffer, bytesRead)) {
         error("Failed to update digest.");
     		goto done;
@@ -88,6 +88,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
    unsigned char * output = NULL;
    FILE * fd = NULL;
    EVP_MD_CTX * ctx = NULL;
+   EVP_PKEY_CTX * pkey_ctx = NULL;
    unsigned char * buffer = NULL;
 
    fd = fopen(file, "r");
@@ -96,11 +97,16 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
  		 goto done;
    }
 
+   // setup RSA key with context
    EVP_PKEY * pkey = EVP_PKEY_new();
    if(EVP_PKEY_assign_RSA(pkey, privKey) != 1) {
      error("Failed to assign signing key.");
      goto done;
    }
+   pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL);
+   EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING);
+
+   // setup digest with context
    ctx = EVP_MD_CTX_create();
    if(ctx == NULL) {
        error("Failed to create context");
@@ -112,13 +118,13 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
        error("Failed to get digest");
        goto done;
    }
+   //
+  //  if(EVP_DigestInit_ex(ctx, md, NULL) != 1) {
+  //      error("Failed to init digest");
+  //      goto done;
+  //  }
 
-   if(EVP_DigestInit_ex(ctx, md, NULL) != 1) {
-       error("Failed to init digest");
-       goto done;
-   }
-
-   if(EVP_DigestSignInit(ctx, NULL, md, NULL, pkey) != 1) {
+   if(EVP_DigestSignInit(ctx, &pkey_ctx, md, NULL, pkey) != 1) {
        error("Failed to init signing digest");
        goto done;
    }
@@ -130,7 +136,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
      goto done;
    }
    size_t bRead = 0;
-   while((bRead = fread(buffer, 1, bufSize, fd))) { // Attention ici, verifier que c'est buffer et bufSize
+   while((bRead = fread(buffer, 1, bufSize, fd)) > 0) { // Attention ici, verifier que c'est buffer et bufSize
     printf("read %zu bytes\n", bRead);
      if(EVP_DigestSignUpdate(ctx, buffer, bRead) != 1) {
          error("Failed to update digest.");
@@ -160,7 +166,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
        error("Failed to sign digest (3).");
        goto done;
    }
-
+   printf("signature length %d", output_len);
    output[output_len] = 0;
 
    done: {

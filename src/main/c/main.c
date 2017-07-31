@@ -22,23 +22,48 @@
 
 #include "test/test.h"
 #include "M2MiClient.h"
-#include "https/HTTPSClient.h"
 
-void test_HTTPS_client(void);
-void test_M2Mi_client(void);
-
-const char * HOST = "https://node2.m2mi.net:9443";
-const char * M2MI_UID = "m2mi";
-const char * M2MI_PWD = "password2";
-const char * APP_UID = "ddf3f076-1568-4913-8f05-8eced7157995";
-const char * APP_PWD = "tW04t31G6yr";
+char * getAbsolutePath(const char * file);
 
 int main(int argc, char *argv[]) {
 
-	run_test();
+	//run_test();
 
+		char * data = "{\"GlossSee\":\"bright\",\"SortAs\":\"apple\",\"ID\":\"123456789\"}";
+		char * config = "config_m2mi.json";
+
+		char * configFile = getAbsolutePath(config);
+		M2MiClient * client = new_m2mi_client(configFile);
+	 	int result = m2mi_send(client, data);
+		if(result > 0) {
+			printf("Data sent.");
+		}
+		m2mi_close(client);
+		free(configFile);
 	return 1;
 
+}
+
+char * getAbsolutePath(const char * file) {
+
+		char currentDir[1024];
+		char * absoluteFile;
+		int length;
+
+		getcwd(currentDir, sizeof(currentDir));
+		absoluteFile = calloc(strlen(currentDir) + 12 + strlen(file), sizeof(char));
+		if(!strcmp(currentDir + strlen(currentDir) - 4, "/bin")) {
+				memcpy(absoluteFile, currentDir, strlen(currentDir) - 4);
+				memcpy(absoluteFile + strlen(currentDir) - 4, "/resources/", 11);
+				memcpy(absoluteFile + strlen(currentDir) + 7, file, strlen(file));
+		}
+		else{
+				memcpy(absoluteFile, currentDir, strlen(currentDir));
+				memcpy(absoluteFile + strlen(currentDir), "/resources/", 11);
+				memcpy(absoluteFile + strlen(currentDir) + 11, file, strlen(file));
+		}
+
+		return absoluteFile;
 }
 
 // void test_M2Mi_client(void) {

@@ -1,10 +1,9 @@
 {
-  "node": "https://node3.m2mi.net:8080",
+  "gateway": "https://portal.m2mi.net:8181",
   "auth_issuer": "m2mi",
-  "auth_url": "https://portal.m2mi.net:8443/m2mi/auth/token",
+  "auth_url": "https://portal.m2mi.net:8181/m2mi/v2/auth",
   "auth_args": {
-    "pubKey":"publicKey.pem",
-    "privKey":"privateKey.pem"
+    "pubKey":"/Users/julien/Documents/git/open-client/resources/cert.pem",
+    "privKey":"/Users/julien/Documents/git/open-client/resources/privKey.pem"
   }
-
 }

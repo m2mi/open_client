@@ -29,11 +29,11 @@
 #include "auth/m2mi.h"
 #include "crypto/crypto.h"
 #include <string.h>
+#include <time.h>
 
 typedef struct M2MiClient_st {
-	char * host;
-	char * m2mi_uid;
-	char * m2mi_secret;
+	char * gateway;
+	auth_config * auth;
 	access_token * token;
 } M2MiClient;
 

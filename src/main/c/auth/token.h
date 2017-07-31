@@ -22,10 +22,16 @@
 
 typedef struct access_token_st {
 	char * type;
-  char * issuer;
+  	char * issuer;
 	char * access;
 	char * refresh;
-	long expires;
+	unsigned long expires;
 } access_token;
+
+typedef struct auth_config_st {
+	char * auth_issuer;
+	char * auth_url;
+	char * auth_args[4];
+} auth_config;
 
 #endif

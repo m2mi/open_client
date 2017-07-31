@@ -37,13 +37,13 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 		return NULL;
 	}
 
-	char * node;
+	char * gateway;
 	char * auth_issuer;
 	char * auth_url;
 	char * auth_args[4];
 	for (i = 1; i < r; i++) {
-		if (jsoneq(config, &t[i], "node") == 0) {
-			node = strndup(config + t[i+1].start, t[i+1].end-t[i+1].start);
+		if (jsoneq(config, &t[i], "gateway") == 0) {
+			gateway = strndup(config + t[i+1].start, t[i+1].end-t[i+1].start);
 			i++;
 		}
 		else if (jsoneq(config, &t[i], "auth_issuer") == 0) {
@@ -60,7 +60,7 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 			}
 			int j;
 			for (j = 0; j < t[i+1].size; j++) {
-				auth_args[j] = strndup(config + t[i+j+2].start, t[i+j+2].end-t[i+j+2].start);
+				auth_args[j] = strndup(config + t[i+1+2*(j+1)].start, t[i+1+2*(j+1)].end-t[i+1+2*(j+1)].start);
 			}
 			i += t[i+1].size + 1;
 		}
@@ -69,7 +69,7 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 		}
 	}
 
-		if(node == NULL || auth_issuer == NULL) {
+		if(gateway == NULL || auth_issuer == NULL) {
 			error("Invalid configuration file.");
 			return NULL;
 		}
@@ -80,12 +80,16 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 			error("Failed to allocate memory for client.");
 			return NULL;
 		}
-		client->host = node;
+		client->gateway = gateway;
+		client->auth = malloc(sizeof(auth_config));
+		client->auth->auth_issuer = auth_issuer;
+		client->auth->auth_url = auth_url;
+		client->auth->auth_args[0] = auth_args[0];
 		client->token = NULL;
 
 		/* We request an authorization token */
 		if(strcmp(auth_issuer, "m2mi") == 0) {
-			client->token = get_m2mi_token(auth_url, auth_args);
+			client->token = get_m2mi_token(client->auth);
 		}
 		else if(strcmp(auth_issuer, "openam") == 0) {
 			client->token = get_openam_token(auth_url, auth_args);
@@ -100,30 +104,6 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 		return client;
 }
 
-// M2MiClient * m2mi_init(const char * host, const char * m2mi_uid, const char * m2mi_password, const char * app_uid, const char * app_password) {
-//
-// 	debug("Initializing M2Mi Client...");
-//
-// 	M2MiClient *client = malloc(sizeof(M2MiClient));
-// 	if(NULL == client) {
-// 		error("Failed to allocate memory for client.");
-// 		return NULL;
-// 	}
-//
-// 	client->host = strdup(host);
-// 	client->m2mi_uid = strdup(m2mi_uid);
-// 	client->m2mi_password = strdup(m2mi_password);
-// 	client->app_uid = strdup(app_uid);
-// 	client->app_password = strdup(app_password);
-// 	client->token = NULL;
-//
-// 	get_openam_token(client);
-//
-// 	debug("Client initialized.");
-//
-// 	return client;
-// }
-
 int m2mi_send(M2MiClient * client, char * data) {
 
 	debug("Sending data to M2Mi Application.");
@@ -133,8 +113,13 @@ int m2mi_send(M2MiClient * client, char * data) {
 		return -1;
 	}
 
+	unsigned long now = (unsigned long)time(NULL);
+	if (now * 1000 > client->token->expires) {
+		client->token = refresh_m2mi_token(client->auth, client->token);
+	}
+
 	char data_url[400];
-	snprintf(data_url, sizeof(data_url), "%s/node/v2/rs/node/data/572c9b97faa1297094bac01c?device=358696048948767",client->host);
+	snprintf(data_url, sizeof(data_url), "%s/node/v2/rs/node/data",client->gateway);
 
 	HTTPSClient * https = new_https_client(data_url);
 	https_open(https);
@@ -155,13 +140,16 @@ int m2mi_close(M2MiClient * client) {
 
 	debug("Closing M2Mi Client...");
 
-	free(client->host);
-	free(client->m2mi_uid);
-	free(client->m2mi_secret);
+	free(client->gateway);
+	if(client->auth != NULL) {
+		free(client->auth->auth_issuer);
+		free(client->auth->auth_url);
+		free(client->auth->auth_args);
+	}
 	if(client->token != NULL) {
 		free(client->token->type);
 		free(client->token->access);
-		free(client->token->refresh);
+		//free(client->token->refresh);
 		free(client->token->issuer);
 	}
 	free(client);

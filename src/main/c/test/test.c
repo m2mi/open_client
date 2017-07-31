@@ -34,7 +34,7 @@ int test_json_from_file(void) {
 /* test crypto */
 int test_load_rsa_private_key(void) {
 
-  char * privKey_file = "./resources/privateKey.pem";
+  char * privKey_file = "./resources/privKey.pem";
   RSA * privKey = load_rsa_private_key(privKey_file);
   if(privKey == NULL)
     fail();
@@ -43,19 +43,19 @@ int test_load_rsa_private_key(void) {
 
 int test_sha256_hash_file(void) {
 
-  char * file = "./resources/test_file.pem";
-  char * hash = sha256_hash_file(file);
+  char * file = "./resources/cert.pem";
+  unsigned char * hash = (unsigned char *)sha256_hash_file(file);
   if(hash == NULL)
     fail();
-  if(strcmp(hash, "gncH9Eubzs0pdjgWYXlN8V3XcWOUZWo4ERly+9h9nV4=") != 0)
+  if(strcmp(hash, "y5fs+ij0J+lfyggdgmXpAkypyiAj7jQImzSdnwElkgE=") != 0)
     fail();
   done();
 }
 
 int test_rsa_sha256_sign_file(void) {
 
-  char * privKey_file = "./resources/privateKey.pem";
-  char * file = "./resources/test_file.pem";
+  char * privKey_file = "./resources/privKey.pem";
+  char * file = "./resources/cert.pem";
   RSA * privKey = load_rsa_private_key(privKey_file);
   char * sig = rsa_sha256_sign_file(privKey, file);
   if(sig == NULL)
@@ -100,10 +100,13 @@ int test_HTTPS_client(void) {
 /* test authentication with M2Mi */
 int test_get_m2mi_token(void) {
 
-  char * m2mi_url = "https://node2.m2mi.net:8443/m2mi_auth-2.3-SNAPSHOT/v2/auth/token";
-  char * args[] = {"./resources/publicKey.pem", "./resources/privateKey.pem"};
+  char * m2mi_url = "https://portal.m2mi.net:8181/m2mi/v2/auth/token/request";
+  char * args[] = {"./resources/cert.pem", "./resources/privKey.pem"};
 
-  access_token * token = get_m2mi_token(m2mi_url, args);
+  auth_config * config = malloc(sizeof(auth_config));
+  config->auth_url = m2mi_url;
+  config->auth_args[0] = args[0];
+  access_token * token = get_m2mi_token(config);
   if(token == NULL)
     fail();
   done();
