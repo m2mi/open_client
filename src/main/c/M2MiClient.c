@@ -85,6 +85,7 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 		client->auth->auth_issuer = auth_issuer;
 		client->auth->auth_url = auth_url;
 		client->auth->auth_args[0] = auth_args[0];
+		client->auth->auth_args[1] = auth_args[1];
 		client->token = NULL;
 
 		/* We request an authorization token */
