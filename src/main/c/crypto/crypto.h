@@ -36,6 +36,6 @@
 char * sha256_hash_file(const char * file);
 char * rsa_sha256_sign_file(RSA * privKey, const char * file);
 RSA * load_rsa_private_key(const char * priv_key_file);
-char * to_base64(const char * str);
+char * to_base64(const char * str, size_t size);
 
 #endif

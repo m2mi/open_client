@@ -25,6 +25,7 @@ char * sha256_hash_file(const char * file) {
   EVP_MD_CTX * mdctx = NULL;
   unsigned char * buffer = NULL;
   unsigned char * digest = NULL;
+  unsigned int digest_len = 0;
 
    fd = fopen(file, "r");
    if(fd == NULL) {
@@ -52,11 +53,11 @@ char * sha256_hash_file(const char * file) {
    while((bytesRead = fread(buffer, 1, bufSize, fd)) > 0) {
       if(1 != EVP_DigestUpdate(mdctx, buffer, bytesRead)) {
         error("Failed to update digest.");
-    		goto done;
+    	goto done;
       }
    }
 
-   unsigned int digest_len = EVP_MD_size(EVP_sha256());
+   digest_len = EVP_MD_size(EVP_sha256());
    digest = (unsigned char *)OPENSSL_malloc(digest_len + 1);
 
    if(digest == NULL) {
@@ -77,7 +78,7 @@ char * sha256_hash_file(const char * file) {
      fclose(fd);
    }
 
-   char * b64 = to_base64((char *)digest);
+   char * b64 = to_base64((char *)digest, digest_len);
    free(digest);
    return b64;
 
@@ -86,6 +87,7 @@ char * sha256_hash_file(const char * file) {
 char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
 
    unsigned char * output = NULL;
+   size_t output_len = 0;
    FILE * fd = NULL;
    EVP_MD_CTX * ctx = NULL;
    EVP_PKEY_CTX * pkey_ctx = NULL;
@@ -118,11 +120,6 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
        error("Failed to get digest");
        goto done;
    }
-   //
-  //  if(EVP_DigestInit_ex(ctx, md, NULL) != 1) {
-  //      error("Failed to init digest");
-  //      goto done;
-  //  }
 
    if(EVP_DigestSignInit(ctx, &pkey_ctx, md, NULL, pkey) != 1) {
        error("Failed to init signing digest");
@@ -137,7 +134,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
    }
    size_t bRead = 0;
    while((bRead = fread(buffer, 1, bufSize, fd)) > 0) { // Attention ici, verifier que c'est buffer et bufSize
-    printf("read %zu bytes\n", bRead);
+    debug("read %zu bytes\n", bRead);
      if(EVP_DigestSignUpdate(ctx, buffer, bRead) != 1) {
          error("Failed to update digest.");
          goto done;
@@ -161,13 +158,12 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
        goto done;
    }
 
-   size_t output_len = req;
+   output_len = req;
    if(EVP_DigestSignFinal(ctx, output, &output_len) != 1) {
        error("Failed to sign digest (3).");
        goto done;
    }
-   printf("signature length %zu", output_len);
-   output[output_len] = 0;
+   output[output_len] = '\0';
 
    done: {
         EVP_MD_CTX_destroy(ctx);
@@ -175,7 +171,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
         free(buffer);
    }
 
-    char * b64 = to_base64((char *)output);
+    char * b64 = to_base64((char *)output, output_len);
     free(output);
     return b64;
  }
@@ -196,7 +192,7 @@ RSA * load_rsa_private_key(const char * priv_key_file) {
    return privKey;
  }
 
- char * to_base64(const char * input) {
+ char * to_base64(const char * input, size_t size) {
 
    if(input == NULL)
       return NULL;
@@ -210,7 +206,7 @@ RSA * load_rsa_private_key(const char * priv_key_file) {
    bio = BIO_new(BIO_s_mem());
    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
    BIO_push(b64, bio);
-   BIO_write(b64, input, strlen(input));
+   BIO_write(b64, input, size);
    BIO_flush(b64);
    BIO_get_mem_ptr(bio, &bio_ptr);
    BIO_set_close(bio, BIO_NOCLOSE);

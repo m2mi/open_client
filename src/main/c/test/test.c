@@ -47,7 +47,8 @@ int test_sha256_hash_file(void) {
   const char * hash = (char *)sha256_hash_file(file);
   if(hash == NULL)
     fail();
-  if(strcmp(hash, "y5fs+ij0J+lfyggdgmXpAkypyiAj7jQImzSdnwElkgE=") != 0)
+  if(strcmp(hash, "ntWfluizqCGG4Dv7ECcrGdhZPzjRlN7S8IChmCrnAvs=") != 0)
+  //if(strcmp(hash, "y5fs+ij0J+lfyggdgmXpAkypyiAj7jQImzSdnwElkgE=") != 0)
     fail();
   done();
 }
@@ -66,7 +67,7 @@ int test_rsa_sha256_sign_file(void) {
 int test_to_base64(void) {
 
   char * str = "This is an example of a string";
-  char * base64 = to_base64(str);
+  char * base64 = to_base64(str, strlen(str));
   if(base64 == NULL)
     fail();
   if(strcmp(base64,"VGhpcyBpcyBhbiBleGFtcGxlIG9mIGEgc3RyaW5n") != 0)

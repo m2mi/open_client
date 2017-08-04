@@ -35,7 +35,7 @@ static int updateCertFromResponse(http_response * response, const char * pub_key
    /* We load the private key */
    RSA * privKey = load_rsa_private_key(priv_key_file);
    /* We sign the hash with the private key */
-   char * signed_hash = rsa_sha256_sign_file(privKey, pub_key_file);
+   char * signed_hash = rsa_sha256_sign_file(privKey, pub_key_file); printf("signed %s\n", signed_hash);
 
    /* We create the request payload */
    int len = strlen(pub_hash) + strlen(signed_hash) + 71;
