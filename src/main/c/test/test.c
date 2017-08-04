@@ -44,7 +44,7 @@ int test_load_rsa_private_key(void) {
 int test_sha256_hash_file(void) {
 
   char * file = "./resources/cert.pem";
-  unsigned char * hash = (unsigned char *)sha256_hash_file(file);
+  const char * hash = (char *)sha256_hash_file(file);
   if(hash == NULL)
     fail();
   if(strcmp(hash, "y5fs+ij0J+lfyggdgmXpAkypyiAj7jQImzSdnwElkgE=") != 0)

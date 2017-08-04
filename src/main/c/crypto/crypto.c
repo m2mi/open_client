@@ -20,7 +20,7 @@
  #include "crypto.h"
 
 char * sha256_hash_file(const char * file) {
-  
+
   FILE * fd = NULL;
   EVP_MD_CTX * mdctx = NULL;
   unsigned char * buffer = NULL;
@@ -166,7 +166,7 @@ char * rsa_sha256_sign_file(RSA * privKey, const char * file) {
        error("Failed to sign digest (3).");
        goto done;
    }
-   printf("signature length %d", output_len);
+   printf("signature length %zu", output_len);
    output[output_len] = 0;
 
    done: {

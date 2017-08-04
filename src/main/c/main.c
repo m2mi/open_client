@@ -48,7 +48,6 @@ char * getAbsolutePath(const char * file) {
 
 		char currentDir[1024];
 		char * absoluteFile;
-		int length;
 
 		getcwd(currentDir, sizeof(currentDir));
 		absoluteFile = calloc(strlen(currentDir) + 12 + strlen(file), sizeof(char));
@@ -65,16 +64,3 @@ char * getAbsolutePath(const char * file) {
 
 		return absoluteFile;
 }
-
-// void test_M2Mi_client(void) {
-//
-// 	char * data = "{\"ID\":\"12\",\"IMEI\":\"358696048948767\",\"LAT\":\"40.241799\",\"LON\":\"-97.910156\"}";
-//
-// 	M2MiClient * client = m2mi_init(HOST, M2MI_UID, M2MI_PWD, APP_UID, APP_PWD);
-// 	int res = m2mi_send(client, data);
-// 	if(res > 0) {
-// 		printf("Data sent.");
-// 	}
-// 	m2mi_close(client);
-//
-// }

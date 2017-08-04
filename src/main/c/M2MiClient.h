@@ -38,7 +38,7 @@ typedef struct M2MiClient_st {
 } M2MiClient;
 
 M2MiClient * new_m2mi_client(const char * config_file);
-int client_send(M2MiClient * client, char * data);
-int client_close(M2MiClient * client);
+int m2mi_send(M2MiClient * client, char * data);
+int m2mi_close(M2MiClient * client);
 
 #endif

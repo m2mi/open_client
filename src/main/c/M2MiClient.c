@@ -37,10 +37,10 @@ M2MiClient * new_m2mi_client(const char * config_file) {
 		return NULL;
 	}
 
-	char * gateway;
-	char * auth_issuer;
-	char * auth_url;
-	char * auth_args[4];
+	char * gateway = NULL;
+	char * auth_issuer = NULL;
+	char * auth_url = NULL;
+	char * auth_args[4] = {NULL,NULL,NULL,NULL};
 	for (i = 1; i < r; i++) {
 		if (jsoneq(config, &t[i], "gateway") == 0) {
 			gateway = strndup(config + t[i+1].start, t[i+1].end-t[i+1].start);
@@ -145,13 +145,17 @@ int m2mi_close(M2MiClient * client) {
 	if(client->auth != NULL) {
 		free(client->auth->auth_issuer);
 		free(client->auth->auth_url);
-		free(client->auth->auth_args);
+		for (int i = 0; i < 4; i++) {
+			free(client->auth->auth_args[i]);
+		}
+		free(client->auth);
 	}
 	if(client->token != NULL) {
 		free(client->token->type);
 		free(client->token->access);
 		//free(client->token->refresh);
 		free(client->token->issuer);
+		free(client->token);
 	}
 	free(client);
 
