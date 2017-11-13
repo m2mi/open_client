@@ -115,7 +115,7 @@ int m2mi_send(M2MiClient * client, char * data) {
 	}
 
 	unsigned long now = (unsigned long)time(NULL);
-	if (now * 1000 > client->token->expires) {
+	if (now > client->token->expires) {
 		client->token = refresh_m2mi_token(client->auth, client->token);
 	}
 
