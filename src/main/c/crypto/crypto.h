@@ -14,7 +14,9 @@
  * limitations under the License.
  *
  * Contributors:
- *     Julien Niset
+ *     William Bathurst
+ *     Louis Lamoureux
+ *     Geoffrey Barnard
  */
 
 #ifndef _crypto_util_h
