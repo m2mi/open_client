@@ -120,7 +120,16 @@ int m2mi_send(M2MiClient * client, char * data) {
 	}
 
 	char data_url[400];
+	/* Change the URL of the API url which is composed of the client->gateway
+	 *
+	 * client->gateway is the gateway URL to application server, for example https://myapp.company.com:port
+	 *
+	 * The application section of the URL is appended below:
+	 * For example: "%s/node/v2/rs/node/data"
+	 *
+	 * */
 	snprintf(data_url, sizeof(data_url), "%s/node/v2/rs/node/data",client->gateway);
+	/* snprintf(data_url, sizeof(data_url), "%s/app/data",client->gateway); */
 
 	HTTPSClient * https = new_https_client(data_url);
 	https_open(https);
