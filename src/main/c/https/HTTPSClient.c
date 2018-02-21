@@ -20,7 +20,14 @@
 #include "HTTPSClient.h"
 
 const char * PREFERRED_CIPHERS = "ALL:+AES:!CAMELLIA:!CHACHA20:!IDEA:!SEED:!aNULL:!eNULL"; //"ECDHE-RSA-SPECK256-SHA256";
-const char * TRUST_CERTS = "./resources/geotrust.pem";
+
+/*
+ * cacerts.pem can be refreshed using the following curl command:
+ *
+ * curl --remote-name --time-cond cacert.pem https://curl.haxx.se/ca/cacert.pem
+ *
+ */
+const char * TRUST_CERTS = "./resources/cacerts.pem";
 const long FLAGS = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
 
 static const char * CONTENT_TYPE_STR[] = {"application/json", "application/x-www-form-urlencoded"};
@@ -161,7 +168,7 @@ int https_open(HTTPSClient *client) {
     realpath(TRUST_CERTS, realPath);
     debug("Trusted Certificate Chain located in %s", realPath);
     res = SSL_CTX_load_verify_locations(ctx, realPath, NULL);
-    if(!(1 == res))
+    if((1 != res))
     {
         error("Failed to load trusted Certificate Chain.");
         ssl_error();
@@ -179,7 +186,7 @@ int https_open(HTTPSClient *client) {
     char tmp[256];
     snprintf(tmp, sizeof(tmp), "%s:%d", url->hostname, url->port);
     res = BIO_set_conn_hostname(web, tmp);
-    if(!(1 == res))
+    if((1 != res))
     {
         error("Failed to set hostname and port.");
         ssl_error();
@@ -195,7 +202,7 @@ int https_open(HTTPSClient *client) {
     }
 
     res = SSL_set_cipher_list(ssl, PREFERRED_CIPHERS);
-    if(!(1 == res))
+    if((1 != res))
     {
         error("Failed to set cipher list");
         ssl_error();
@@ -203,7 +210,7 @@ int https_open(HTTPSClient *client) {
     }
 
     res = SSL_set_tlsext_host_name(ssl, url->hostname);
-    if(!(1 == res))
+    if((1 != res))
     {
         error("Failed to set tlsext hostname.");
         ssl_error();
@@ -211,7 +218,7 @@ int https_open(HTTPSClient *client) {
     }
 
     res = BIO_do_connect(web);
-    if(!(1 == res))
+    if((1 != res))
     {
         error("Connection error.");
         ssl_error();
@@ -219,7 +226,7 @@ int https_open(HTTPSClient *client) {
     }
 
     res = BIO_do_handshake(web);
-    if(!(1 == res))
+    if((1 != res))
     {
         error("Handshake error.");
         ssl_error();
