@@ -53,7 +53,6 @@ The base client code is ready for compilation. Use make clean and make to compil
 
 `
 make clean
-
 make dev
 `
 
